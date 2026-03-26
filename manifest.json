@@ -40,7 +40,10 @@
 
     "tasks": "Cron tasks that run on a schedule. Each has: name, prompt (sent to agent), schedule (cron expression), enabled (boolean). Max 20. Example schedule: '0 9 * * *' = 9am daily.",
 
-    "routes": "Port forwarding rules. Each has: port (1025-65535), path (URL prefix like '/app'), protected (boolean, default true = requires auth). Max 10.",
+    "scripts.build": "Optional. Shell command that runs after git push (e.g. 'cd workspace/projects/myapp && npm install --include=dev'). Use it to install dependencies or compile assets.",
+    "scripts.start": "Optional. Shell command that runs on agent boot (e.g. 'cd workspace/projects/myapp && npx vite --host 0.0.0.0'). Use it to start a dev server, API, or any long-running process.",
+
+    "routes": "Port forwarding rules. Each has: port (1025-65535), path (URL prefix like '/app'), protected (boolean, default true = requires auth). Max 10. Pair with scripts.start to run a server and expose it. Your server must bind to 0.0.0.0 (not localhost). Use the __AGENT_HOST__ placeholder in config files — it gets replaced with the agent's public hostname at runtime. For HMR/WebSocket setups, use WSS on port 443 via __AGENT_HOST__.",
 
     "channels.telegram.enabled": "Enable Telegram channel.",
     "channels.telegram.dmPolicy": "'pairing' (requires pairing code), 'open' (anyone can DM), or 'closed' (no DMs).",
