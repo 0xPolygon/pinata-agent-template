@@ -33,7 +33,7 @@ The `manifest.json` includes a `_docs` block documenting every available field. 
 | Section      | What it does                                                                 |
 | ------------ | ---------------------------------------------------------------------------- |
 | **agent**    | Name, description, vibe, emoji                                               |
-| **model**    | Default AI model                                                             |
+| **model**    | Default AI model (optional — users pick in the UI)                           |
 | **secrets**  | Encrypted API keys and credentials                                           |
 | **skills**   | Attachable skill packages from ClawHub (max 20)                              |
 | **tasks**    | Cron-scheduled prompts (max 20)                                              |
@@ -53,19 +53,12 @@ The template manifest works out of the box with these sections:
   "version": 1,
   "agent": { "name": "...", "description": "...", "vibe": "...", "emoji": "..." },
   "template": { "slug": "...", "category": "...", "partnerName": "...", "tags": [...] },
-  "model": { "primary": "anthropic/claude-sonnet-4-6" },
-  "secrets": [{ "name": "ANTHROPIC_API_KEY", "description": "...", "required": true }],
+  "secrets": [{ "name": "MY_SECRET", "description": "...", "required": false }],
   "tasks": [{ "name": "daily-check", "prompt": "...", "schedule": "0 9 * * *", "enabled": true }]
 }
 ```
 
 ### Field Details
-
-**`model`** — Set the AI model your agent uses. If omitted, the platform default is used.
-
-```json
-"model": { "primary": "anthropic/claude-sonnet-4-6" }
-```
 
 **`secrets`** — Declare API keys or credentials your agent needs. Values are stored encrypted and injected as environment variables at runtime — never put actual secret values in the manifest.
 

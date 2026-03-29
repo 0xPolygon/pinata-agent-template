@@ -53,15 +53,11 @@
     "channels.slack.enabled": "Enable Slack channel."
   },
 
-  "model": {
-    "primary": "anthropic/claude-sonnet-4-6"
-  },
-
   "secrets": [
     {
-      "name": "ANTHROPIC_API_KEY",
-      "description": "Anthropic API key for Claude models",
-      "required": true
+      "name": "MY_SECRET",
+      "description": "Example secret — any secret your agent might need to work",
+      "required": false
     }
   ],
 
