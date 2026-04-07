@@ -32,18 +32,16 @@
     "template.partnerUrl": "Optional. Author website URL.",
     "template.partnerLogoUrl": "Optional. Author logo URL.",
 
-    "model.primary": "Optional. Default model ID (e.g. 'anthropic/claude-sonnet-4-6'). If omitted, uses platform default.",
-
     "secrets": "Array of secrets the agent needs. Values are stored encrypted, never in the manifest. Each secret has: name (env var name), description (human-readable), required (boolean, default true).",
 
     "skills": "Array of skills to attach. Each has: cid (IPFS content ID), name (optional, human-readable). Max 20.",
 
-    "tasks": "Cron tasks that run on a schedule. Each has: name, prompt (sent to agent), schedule (cron expression), enabled (boolean). Max 20. Example schedule: '0 9 * * *' = 9am daily.",
+    "tasks": "Scheduled tasks. Each has: name, prompt (sent to agent), schedule (cron expression like '0 9 * * *' OR milliseconds like '600000ms'), enabled (boolean). Max 20.",
 
-    "scripts.build": "Optional. Shell command that runs after git push (e.g. 'cd workspace/projects/myapp && npm install --include=dev'). Use it to install dependencies or compile assets.",
-    "scripts.start": "Optional. Shell command that runs on agent boot (e.g. 'cd workspace/projects/myapp && npx vite --host 0.0.0.0'). Use it to start a dev server, API, or any long-running process.",
+    "scripts.build": "Shell command that runs after git push. Use it to install dependencies or compile assets.",
+    "scripts.start": "Shell command that runs on agent boot. Use it to start a server or long-running process. Consider using pm2 for process management.",
 
-    "routes": "Port forwarding rules. Each has: port (1025-65535), path (URL prefix like '/app'), protected (boolean, default true = requires auth). Max 10. Pair with scripts.start to run a server and expose it. Your server must bind to 0.0.0.0 (not localhost). Use the __AGENT_HOST__ placeholder in config files — it gets replaced with the agent's public hostname at runtime. For HMR/WebSocket setups, use WSS on port 443 via __AGENT_HOST__.",
+    "routes": "Port forwarding rules. Each has: port (1025-65535), path (URL prefix like '/dashboard'), protected (boolean, default true = requires auth). Max 10. Your server must bind to 0.0.0.0, not localhost.",
 
     "channels.telegram.enabled": "Enable Telegram channel.",
     "channels.telegram.dmPolicy": "'pairing' (requires pairing code), 'open' (anyone can DM), or 'closed' (no DMs).",
@@ -53,7 +51,12 @@
     "channels.slack.enabled": "Enable Slack channel."
   },
 
-  "secrets": [
+  "scripts": {
+    "build": "cd projects/hello-world && npm install --include=dev",
+    "start": "cd projects/hello-world && npx vite --host 0.0.0.0"
+  },
+
+  "routes": [
     {
       "name": "MY_SECRET",
       "description": "Example secret — any secret your agent might need to work",
