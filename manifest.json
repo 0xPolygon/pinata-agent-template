@@ -23,11 +23,6 @@
     "primary": "anthropic/claude-sonnet-4-6"
   },
 
-  "skills": [
-    { "clawhub_slug": "polygon-agent-cli", "name": "Polygon Agent CLI" },
-    { "clawhub_slug": "polygon-defi", "name": "Polygon DeFi" }
-  ],
-
   "secrets": [
     {
       "name": "SEQUENCE_PROJECT_ACCESS_KEY",
