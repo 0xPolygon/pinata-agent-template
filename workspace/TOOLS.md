@@ -167,7 +167,7 @@ Pre-whitelist these when running `wallet create --contract <addr>`.
 |-------|-----|
 | `Deposit session rejected` | Pool contract not in whitelist — re-create wallet with `--contract <depositAddress>` from dry-run |
 | `Builder configured already` | Add `--force` to setup command |
-| `Missing TRAILS_ACCESS_KEY` | Run `polygon-agent setup` first; or set `TRAILS_ACCESS_KEY` |
+| `Missing SEQUENCE_PROJECT_ACCESS_KEY` | Run `polygon-agent setup` first |
 | `Missing wallet` | Run `wallet list`, then `wallet create` |
 | `Session expired` | Re-run `wallet create` (6-month expiry) |
 | `swap`: no route found | Try smaller amount or different pair |

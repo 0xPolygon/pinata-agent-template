@@ -22,15 +22,14 @@ description: "Complete Polygon agent toolkit for on-chain operations on Polygon.
 
 ### Access key — auto-loaded, no export needed
 
-After `setup` runs, the Trails access key is stored in `~/.polygon-agent/builder.json` and loaded automatically as `TRAILS_ACCESS_KEY` on every CLI invocation. No manual export needed.
-
-Get a Trails API key at [https://dashboard.trails.build](https://dashboard.trails.build).
+After `setup` runs, the access key is stored in `~/.polygon-agent/builder.json`. The CLI bootstraps it into `SEQUENCE_PROJECT_ACCESS_KEY` automatically on every invocation. Trails commands (`swap`, `deposit`, `bridge`) check `TRAILS_API_KEY` first, then fall back to `SEQUENCE_PROJECT_ACCESS_KEY` — no manual export needed.
 
 **In a fresh agent session with no environment variables set**, simply run commands — the CLI reads credentials from disk. No `export` step is required between phases.
 
-Only set this manually to override the stored value:
+Only set these manually to override the stored values:
 ```bash
-export TRAILS_ACCESS_KEY=<your-trails-api-key>
+export TRAILS_API_KEY=<your-trails-api-key>       # optional: explicit Trails key (dashboard.trails.build)
+export SEQUENCE_PROJECT_ACCESS_KEY=<override-key> # optional: override Sequence project key
 ```
 
 ### Optional overrides
@@ -192,7 +191,7 @@ For specific workflows, load the relevant sub-skill:
 | Issue | Fix |
 |-------|-----|
 | `Builder configured already` | Add `--force` |
-| `Missing TRAILS_ACCESS_KEY` | Run `setup` first; or set `TRAILS_ACCESS_KEY` |
+| `Missing SEQUENCE_PROJECT_ACCESS_KEY` | Run `setup` first |
 | `Missing wallet` | `wallet list`, re-run `wallet create` |
 | `Session expired` | Re-run `wallet create` (6-month expiry) |
 | `Fee option errors` | Set `POLYGON_AGENT_DEBUG_FEE=1`, ensure wallet has funds |
