@@ -1,186 +1,149 @@
-# OpenClaw Agent Template
+# Yield Optimizer Agent
 
-> **This is a base template.** It is intentionally generic. Clone it and customize it to build _your_ agent — a frontend dev, a data pipeline monitor, a personal assistant, a Discord bot, whatever you want. Do NOT treat this as a finished agent or specialize it in place.
+An autonomous DeFi agent that discovers and deposits into the highest-yielding pools on Polygon. Powered by [Trails](https://trails.build) pool discovery — APY and vault addresses are resolved at runtime, never hardcoded. Supports Aave v3 and Morpho vaults on Polygon mainnet and Katana.
 
-## What This Is
+Deploy it on [Pinata Agents](https://agents.pinata.cloud) and get a yield optimizer that monitors your positions every 6 hours and alerts you when a better opportunity appears.
 
-A vanilla starting point for building agents on [Pinata Agents](https://agents.pinata.cloud). It provides:
+## What It Does
 
-- A documented `manifest.json` with every available option explained
-- A workspace structure with personality, memory, and safety conventions
-- A bootstrap flow so the agent figures out who it is on first run
+- **Discovers** the best available APY across Aave v3 and Morpho for USDC, USDT, and WETH
+- **Executes** deposits into the highest-TVL pool on your confirmation
+- **Monitors** positions every 6 hours via scheduled tasks, alerting when a >1% APY improvement is available
+- **Reports** a daily portfolio snapshot at 9am
 
-**What this is NOT:** a specific agent. The placeholder name, description, and personality are examples. Replace them.
+All commands are dry-run by default — the agent shows you exactly what it will do (APY, TVL, contract address) before asking for confirmation.
 
-## Structure
+## Setup
+
+### Prerequisites
+
+- A funded Polygon mainnet wallet (USDC, USDT, or POL for gas)
+- A [Pinata Agents](https://agents.pinata.cloud) account
+- A Trails API key — get one at [https://dashboard.trails.build](https://dashboard.trails.build)
+
+### Deploy
+
+1. Import this repo into [agents.pinata.cloud](https://agents.pinata.cloud)
+2. Deploy — the build script installs the `polygon-agent` CLI automatically
+3. Start a conversation with your agent and follow the first-run guide
+
+### Secrets & Configuration
+
+| Secret | Required | Description |
+|--------|----------|-------------|
+| `TRAILS_ACCESS_KEY` | Required | Your Trails API key from [dashboard.trails.build](https://dashboard.trails.build). Used for pool discovery, swaps, and bridging. |
+
+### First-Run Flow
+
+The agent walks you through four steps on first conversation:
+
+**1. Setup** — creates an EOA and Sequence project, stores credentials encrypted on disk
+
+```bash
+polygon-agent setup --name "YieldOptimizer"
+```
+
+**2. Create Wallet** — creates a smart contract wallet pre-authorized for yield vaults
+
+```bash
+polygon-agent wallet create \
+  --usdc-limit 100 \
+  --native-limit 5 \
+  --contract 0x794a61358d6845594f94dc1db02a252b5b4814ad \
+  --contract 0x781fb7f6d845e3be129289833b04d43aa8558c42 \
+  --contract 0xf5c81d25ee174d83f1fd202ca94ae6070d073ccf
+```
+
+A browser window opens for approval. After approving, enter the 6-digit code shown in the browser.
+
+**3. Fund** — run `polygon-agent fund` to get a Trails funding widget URL. Open it to deposit USDC or USDT.
+
+**4. Optimize** — the agent dry-runs a deposit to show you the current best APY, then executes on your confirmation.
+
+## Yield Flows
+
+### Discover Best APY
+
+```bash
+# Dry-run — shows protocol, APY, TVL, and contract before any commitment
+polygon-agent deposit --asset USDC --amount <amount>
+
+# Filter by protocol
+polygon-agent deposit --asset USDC --amount <amount> --protocol aave
+polygon-agent deposit --asset USDC --amount <amount> --protocol morpho
+```
+
+### Execute Deposit
+
+```bash
+polygon-agent deposit --asset USDC --amount <amount> --broadcast
+```
+
+### Swap First if Needed
+
+```bash
+# POL → USDC before depositing
+polygon-agent swap --from POL --to USDC --amount 1 --broadcast
+```
+
+### Monitor Balances
+
+```bash
+polygon-agent balances
+```
+
+## Supported Protocols
+
+| Protocol | Assets | Chain |
+|----------|--------|-------|
+| Aave v3 | USDC, USDT, WETH, WMATIC | Polygon mainnet |
+| Morpho Compound | USDC, WETH, POL | Polygon mainnet |
+| Morpho (Gauntlet, Steakhouse, Yearn) | USDC, USDT, WETH | Katana |
+
+## Scheduled Tasks
+
+These run automatically once your agent is deployed and set up.
+
+| Task | Schedule | Description |
+|------|----------|-------------|
+| `yield-monitor` | Every 6 hours | Checks current best APY vs open positions. Alerts if >1% better available. |
+| `daily-report` | 9am daily | Portfolio snapshot: balances, positions, estimated daily yield. |
+
+## Session Permissions
+
+The wallet session is scoped to the pre-whitelisted vault contracts. If you want to deposit into a vault not in the whitelist, dry-run first to get its address, then re-create the wallet with `--contract <address>` added.
+
+## File Structure
 
 ```
-manifest.json                # Agent config — all available options documented in _docs
+manifest.json                 # Agent config and scheduled tasks
 workspace/
-  BOOTSTRAP.md               # First-run conversation guide (self-deletes after setup)
-  SOUL.md                    # Agent personality and principles — customize this
-  AGENTS.md                  # Workspace conventions, memory system, safety rules
-  IDENTITY.md                # Agent name, vibe, emoji (filled in during bootstrap)
-  USER.md                    # Notes about the human (learned over time)
-  TOOLS.md                   # Environment-specific notes
-  HEARTBEAT.md               # Periodic tasks (empty by default)
-  projects/
-    hello-test/              # Vite + React + TS starter project (served at /app)
+  SOUL.md                     # Agent principles and DeFi rules
+  TOOLS.md                    # Full CLI command reference and vault whitelist
+  AGENTS.md                   # Workspace conventions
+  IDENTITY.md                 # Agent name and vibe
+  HEARTBEAT.md                # Periodic monitoring tasks
+  BOOTSTRAP.md                # First-run setup guide (deleted after setup)
+  USER.md                     # Notes about the human (built over time)
+  memory/
+    yield-state.json          # Open positions, recorded APY, deposit history
+    YYYY-MM-DD.md             # Daily logs
 ```
 
-## Manifest Options
+## Troubleshooting
 
-The `manifest.json` includes a `_docs` block documenting every available field. Here's an overview:
+| Error | Fix |
+|-------|-----|
+| `Deposit session rejected` | Pool contract not in whitelist — re-run `wallet create` with `--contract <depositAddress>` from dry-run |
+| `Builder configured already` | Add `--force` to the setup command |
+| `Missing TRAILS_ACCESS_KEY` | Set `TRAILS_ACCESS_KEY` in your agent secrets or run `polygon-agent setup` |
+| `Missing wallet` | Run `wallet list`, then `wallet create` |
+| `Session expired` | Re-run `wallet create` (sessions last 6 months) |
+| `swap: no route found` | Try a smaller amount or different pair |
 
-| Section      | What it does                                                                 |
-| ------------ | ---------------------------------------------------------------------------- |
-| **agent**    | Name, description, vibe, emoji                                               |
-| **model**    | Default AI model (optional — users pick in the UI)                           |
-| **secrets**  | Encrypted API keys and credentials                                           |
-| **skills**   | Attachable skill packages from ClawHub (max 20)                              |
-| **tasks**    | Cron-scheduled prompts (max 20)                                              |
-| **scripts**  | Lifecycle hooks — `build` runs after git push, `start` runs on agent boot    |
-| **routes**   | Port forwarding for web apps/APIs (max 10)                                   |
-| **channels** | Telegram, Discord, Slack configuration                                       |
-| **template** | Marketplace listing metadata                                                 |
+## Powered By
 
-Remove the `_docs` block before submitting to the marketplace.
-
-## What's Included in the Manifest
-
-The template manifest works out of the box with these sections:
-
-```json
-{
-  "version": 1,
-  "agent": { "name": "...", "description": "...", "vibe": "...", "emoji": "..." },
-  "template": { "slug": "...", "category": "...", "partnerName": "...", "tags": [...] },
-  "secrets": [{ "name": "MY_SECRET", "description": "...", "required": false }],
-  "scripts": {
-    "build": "cd ./workspace/projects/hello-test && npm install --include=dev",
-    "start": "cd ./workspace/projects/hello-test && npx vite --host 0.0.0.0 --port 5173"
-  },
-  "routes": [{ "port": 5173, "path": "/app", "protected": false }],
-  "tasks": [{ "name": "daily-check", "prompt": "...", "schedule": "0 9 * * *", "enabled": true }]
-}
-```
-
-### Field Details
-
-**`secrets`** — Declare API keys or credentials your agent needs. Values are stored encrypted and injected as environment variables at runtime — never put actual secret values in the manifest.
-
-```json
-"secrets": [
-  { "name": "COINGECKO_API_KEY", "description": "API key from coingecko.com/api", "required": true },
-  { "name": "SLACK_WEBHOOK", "description": "Slack incoming webhook URL", "required": false }
-]
-```
-
-**`tasks`** — Schedule prompts sent to your agent on a cron schedule. Max 20.
-
-```json
-"tasks": [
-  { "name": "daily-report", "prompt": "Generate report", "schedule": "0 9 * * *", "enabled": true },
-  { "name": "price-check", "prompt": "Check BTC and ETH prices", "schedule": "*/30 * * * *", "enabled": true }
-]
-```
-
-Common cron patterns:
-- `0 9 * * *` — daily at 9am
-- `*/30 * * * *` — every 30 minutes
-- `0 */6 * * *` — every 6 hours
-- `0 9 * * 1` — every Monday at 9am
-
-## Optional Sections (Add When You Need Them)
-
-These sections require additional setup (app code, valid CIDs, or platform accounts) — don't add them until you have the backing infrastructure.
-
-**`skills`** — Attach skill packages from ClawHub. Max 20. Each skill is referenced by its IPFS content ID.
-
-```json
-"skills": [
-  { "cid": "bafkrei...", "name": "web-search" },
-  { "cid": "bafkrei...", "name": "code-interpreter" }
-]
-```
-
-**`channels`** — Connect your agent to messaging platforms. Each channel supports a `dmPolicy`:
-- `"pairing"` — users must enter a pairing code to start a conversation
-- `"open"` — anyone can message the agent
-- `"closed"` — DMs disabled
-
-```json
-"channels": {
-  "telegram": { "enabled": true, "dmPolicy": "pairing", "allowFrom": [123456789] },
-  "discord": { "enabled": true, "dmPolicy": "open" },
-  "slack": { "enabled": true }
-}
-```
-
-## Serving a Web App (Scripts + Routes)
-
-If your agent runs a server, API, or frontend dev server, you need two things in `manifest.json`:
-
-1. **`scripts`** — lifecycle hooks that install deps and start the server
-2. **`routes`** — port forwarding rules that expose the server to the internet
-
-Example from a Vite + React agent:
-
-```json
-{
-  "scripts": {
-    "build": "cd workspace/projects/myapp && npm install --include=dev",
-    "start": "cd workspace/projects/myapp && npx vite --host 0.0.0.0"
-  },
-  "routes": [
-    {
-      "port": 5173,
-      "path": "/app",
-      "protected": false
-    }
-  ]
-}
-```
-
-**Important details:**
-
-- `build` runs after every git push — use it to install dependencies or compile assets
-- `start` runs on agent boot — use it to launch your server or long-running process
-- Your server **must bind to `0.0.0.0`**, not `localhost`, or it won't be reachable
-- Set `protected: false` for public routes, or `true` (default) to require auth
-
-### How Port Forwarding Works
-
-Your agent runs inside a container behind a reverse proxy. When you define a route like `{ "port": 5173, "path": "/app" }`, the platform sets up path-based routing:
-
-1. External requests to `https://<agent-host>/app/...` are matched by prefix
-2. The gateway forwards them to your container on the specified port
-3. **The path prefix is preserved** — your server receives `/app/...`, not `/...`
-
-This means your app must be configured to serve from the route path. For Vite, set `base` to match:
-
-```ts
-// workspace/projects/hello-test/vite.config.ts
-export default defineConfig({
-  base: "/app",          // Must match the route path in manifest.json
-  plugins: [react()],
-  server: {
-    host: "0.0.0.0",    // Required — localhost won't be reachable from the proxy
-    port: 5173,          // Must match the route port in manifest.json
-    strictPort: true,    // Fail if port is taken instead of picking another
-    allowedHosts: true,  // Accept requests from the proxy hostname
-    hmr: false,          // HMR doesn't work through the gateway — disable it
-  },
-});
-```
-
-**If you're serving a different framework** (Express, Fastify, Next.js, etc.), the same rules apply: bind to `0.0.0.0`, listen on the port you declared, and mount your app at the route path.
-
-The agent's public URL follows this pattern: `https://<agent-id>.agents.pinata.cloud/<path>`. You can derive your agent ID from the runtime hostname (strip the `-0` suffix from the host).
-
-## How to Use
-
-1. Import this repo when creating an agent on [Pinata Agents](https://agents.pinata.cloud)
-2. Edit `manifest.json` — change the agent name, description, tags, and add any options you need (scripts, routes, channels, etc.)
-3. Edit the workspace files — give your agent a personality, tools, and purpose
-4. If your agent runs a server or app, add `scripts` and `routes` as shown above
+- [Polygon Agent CLI](https://github.com/0xPolygon/polygon-agent-kit) — on-chain operations, wallet management
+- [Trails](https://trails.build) — live pool discovery and DeFi routing
+- [Sequence](https://sequence.xyz) — smart contract wallet infrastructure
+- [Pinata Agents](https://agents.pinata.cloud) — agent hosting and scheduling
