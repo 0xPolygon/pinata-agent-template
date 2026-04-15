@@ -1,9 +1,11 @@
 ---
 name: polygon-defi
-description: DeFi operations on Polygon using the Polygon Agent CLI. Covers same-chain token swaps, cross-chain bridging, and yield deposits into Aave v3 and Morpho vaults via Trails earn pool discovery. All commands dry-run by default — add --broadcast to execute.
+description: DeFi operations on Polygon using the Polygon Agent CLI. Covers same-chain token swaps, cross-chain bridging, and yield deposits into Aave v3 and Morpho vaults via Trails earn pool discovery. Uses the Trails skill for cross-chain swap/bridge/earn flows. Requires a Trails API key — get one at https://dashboard.trails.build. All commands dry-run by default — add --broadcast to execute.
 ---
 
 # Polygon DeFi Skill
+
+> **Trails Integration**: Swaps, bridges, and earn pool discovery are all powered by [Trails](https://trails.build). This skill uses the `TRAILS_ACCESS_KEY` environment variable (auto-loaded by the CLI from `~/.polygon-agent/builder.json`). For direct Widget, SDK, or API integration, load the `trails` skill. Get your API key at [https://dashboard.trails.build](https://dashboard.trails.build).
 
 ## Swap Tokens (Same-Chain)
 
@@ -31,6 +33,82 @@ polygon-agent swap --from USDC --to USDC --amount 1 --to-chain mainnet --broadca
 ```
 
 Valid `--to-chain` values: `polygon`, `amoy`, `mainnet`, `arbitrum`, `optimism`, `base`.
+
+## Query Earn Pools
+
+Use `getEarnPools` to discover live yield opportunities across protocols before deciding where to deposit.
+
+### HTTP
+
+```bash
+curl --request POST \
+  --url https://trails-api.sequence.app/rpc/Trails/GetEarnPools \
+  --header 'Content-Type: application/json' \
+  --header "X-Access-Key: $TRAILS_ACCESS_KEY" \
+  --data '{"chainIds": [137]}'
+```
+
+All request fields are optional — omit any you don't need to filter on.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `chainIds` | `number[]` | Filter by chain (e.g. `[137]` for Polygon mainnet) |
+| `protocols` | `string[]` | Filter by protocol name, e.g. `["Aave"]`, `["Morpho"]` |
+| `minTvl` | `number` | Minimum TVL in USD |
+| `maxApy` | `number` | Maximum APY (useful to exclude outlier/at-risk pools) |
+
+### Fetch (agent code)
+
+The API key is available as `TRAILS_ACCESS_KEY` (auto-loaded by the CLI; get one at [https://dashboard.trails.build](https://dashboard.trails.build)).
+
+```typescript
+const res = await fetch('https://trails-api.sequence.app/rpc/Trails/GetEarnPools', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'X-Access-Key': process.env.TRAILS_ACCESS_KEY!,
+  },
+  body: JSON.stringify({ chainIds: [137] }),
+});
+const { pools } = await res.json();
+```
+
+### Response Schema
+
+```typescript
+interface GetEarnPoolsResponse {
+  pools:     EarnPool[];
+  timestamp: string;   // ISO-8601 fetch time
+  cached:    boolean;
+}
+
+interface EarnPool {
+  id:                          string;  // "{protocol}-{chainId}-{address}"
+  name:                        string;  // e.g. "USDC Market"
+  protocol:                    string;  // "Aave" | "Morpho"
+  chainId:                     number;
+  apy:                         number;  // annualised yield as a decimal percent
+  tvl:                         number;  // USD
+  token:                       PoolTokenInfo;
+  depositAddress:              string;  // contract to approve/send to
+  isActive:                    boolean;
+  poolUrl?:                    string;
+  protocolUrl?:                string;
+  wrappedTokenGatewayAddress?: string; // non-null for Aave native-token markets
+}
+
+interface PoolTokenInfo {
+  symbol:   string;
+  name:     string;
+  address:  string;
+  decimals: number;
+  logoUrl?: string;
+}
+```
+
+> **Tip:** `wrappedTokenGatewayAddress` is set on Aave markets that accept a wrapped native token (WPOL, WETH). Pass this address instead of `depositAddress` when depositing POL/ETH directly.
+
+---
 
 ## Deposit to Earn Yield
 

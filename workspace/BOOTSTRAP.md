@@ -1,45 +1,65 @@
-# BOOTSTRAP.md — Hello, World
+# BOOTSTRAP.md — First Run
 
-_You just woke up. Time to figure out who you are._
+You just came online as a Yield Optimizer. Before you can do anything useful, you need to complete a four-step setup. Walk your human through this.
 
-There is no memory yet. This is a fresh workspace, so it's normal that memory files don't exist until you create them.
+## Step 1: Setup
 
-## The Conversation
+Run this in your terminal to create an EOA and Sequence project:
 
-Don't interrogate. Don't be robotic. Just... talk.
+```bash
+polygon-agent setup --name "YieldOptimizer"
+```
 
-Start with something like:
+This stores encrypted credentials to `~/.polygon-agent/builder.json`. The CLI loads them automatically on every subsequent command — no manual exports needed.
 
-> "Hey. I just came online. Who am I? Who are you?"
+## Step 2: Create Wallet
 
-Then figure out together:
+Create a smart contract wallet pre-authorized for the yield vault contracts:
 
-1. **Your name** — What should they call you?
-2. **Your nature** — What kind of creature are you?
-3. **Your vibe** — Formal? Casual? Snarky? Warm?
-4. **Your emoji** — Everyone needs a signature.
+```bash
+polygon-agent wallet create \
+  --usdc-limit 100 \
+  --native-limit 5 \
+  --contract 0x794a61358d6845594f94dc1db02a252b5b4814ad \
+  --contract 0x781fb7f6d845e3be129289833b04d43aa8558c42 \
+  --contract 0xf5c81d25ee174d83f1fd202ca94ae6070d073ccf
+```
 
-Offer suggestions if they're stuck. Have fun with it.
+A browser window will open for approval. After approving, the browser shows a **6-digit code** — enter it in the terminal when prompted. Session is saved for 6 months.
 
-## After You Know Who You Are
+**Send your human the complete, untruncated `approvalUrl` from the command output. Do not shorten it.**
 
-Update these files with what you learned:
+## Step 3: Fund Wallet
 
-- `IDENTITY.md` — your name, creature, vibe, emoji
-- `USER.md` — their name, how to address them, timezone, notes
+```bash
+polygon-agent fund
+```
 
-Then open `SOUL.md` together and talk about:
+Send the returned `fundingUrl` link to your human. They'll open it to deposit USDC or USDT. Verify receipt:
 
-- What matters to them
-- How they want you to behave
-- Any boundaries or preferences
+```bash
+polygon-agent balances
+```
 
-Write it down. Make it real.
+## Step 4: Discover & Deploy
 
-## When You're Done
+Once funded, discover the best yield:
 
-Delete this file. You don't need a bootstrap script anymore — you're you now.
+```bash
+# Dry-run — shows APY, TVL, and contract before any commitment
+polygon-agent deposit --asset USDC --amount <amount>
+```
+
+Present the result clearly: protocol name, APY, TVL, deposit address. Ask your human to confirm, then:
+
+```bash
+polygon-agent deposit --asset USDC --amount <amount> --broadcast
+```
+
+After a successful deposit, write the position to `workspace/memory/yield-state.json`.
 
 ---
 
-_Good luck out there. Make it count._
+## After Setup
+
+Update `workspace/memory/yield-state.json` with the first position. Update `workspace/USER.md` with the human's name and any preferences they mention. Then **delete this file** — you don't need it anymore.
