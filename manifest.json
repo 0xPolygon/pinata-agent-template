@@ -26,7 +26,7 @@
   "secrets": [
     {
       "name": "SEQUENCE_PROJECT_ACCESS_KEY",
-      "description": "Sequence project access key used for smart contract wallet operations. Generated automatically during first-run setup (`polygon-agent setup`) — no manual configuration needed for new deployments. Only set this manually when migrating an existing setup or running in a headless environment.",
+      "description": "Sequence project access key used for smart contract wallet operations. Get your key from https://dashboard.trails.build — navigate to your project and copy the access key. Only required when running in a headless environment; generated automatically during first-run setup (`polygon-agent setup`) for new deployments.",
       "required": false
     }
   ],
