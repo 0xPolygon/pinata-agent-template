@@ -14,9 +14,8 @@
     "category": "defi",
     "tags": ["defi", "yield", "polygon", "aave", "morpho", "trails", "blockchain"],
     "authorName": "Polygon",
-    "partnerName": "Polygon",
-    "partnerUrl": "https://polygon.technology",
-    "partnerLogoUrl": "https://cdn.prod.website-files.com/695f9b8b60e3caf52637f379/6968b6a82107499e4021226d_polygon%20fav.png"
+    "authorUrl": "https://polygon.technology",
+    "authorLogoUrl": "https://cdn.prod.website-files.com/695f9b8b60e3caf52637f379/6968b6a82107499e4021226d_polygon%20fav.png"
   },
 
   "model": {
